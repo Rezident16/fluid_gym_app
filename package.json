@@ -1,0 +1,17 @@
+{
+  "name": "fluid-gym-app",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm --workspace @fluidgym/api run dev",
+    "dev:web": "npm --workspace @fluidgym/web run dev",
+    "build:api": "npm --workspace @fluidgym/api run build",
+    "build:web": "npm --workspace @fluidgym/web run build",
+    "start:api": "npm --workspace @fluidgym/api run start",
+    "start:web": "npm --workspace @fluidgym/web run preview"
+  }
+}
