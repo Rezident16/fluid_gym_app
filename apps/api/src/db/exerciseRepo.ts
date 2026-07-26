@@ -1,0 +1,13 @@
+import prisma from './prisma'
+
+export const listExercisesByBodyPart = async (bodyPart: string) => {
+  return prisma.exercise.findMany({ where: { bodyPart } })
+}
+
+export const findExerciseById = async (id: string) => {
+  return prisma.exercise.findUnique({ where: { id } })
+}
+
+export const createExercise = async (data: any) => {
+  return prisma.exercise.create({ data })
+}
