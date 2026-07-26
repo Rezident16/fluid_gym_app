@@ -38,7 +38,7 @@ model TrainingPreference {
 
 model Exercise {
   id                  String   @id @default(uuid())
-  name                String
+  name                String   @unique
   bodyPart            String
   secondaryBodyParts  String[]
   equipment           String
@@ -56,6 +56,8 @@ model WeeklyIntention {
   userId        String
   weekStartDate DateTime
   targetSessions Int
+
+  @@unique([userId, weekStartDate])
 }
 
 model Session {
@@ -88,4 +90,6 @@ model BodyPartHistory {
   bodyPart      String
   lastTrainedDate DateTime
   lastSessionId String
+
+  @@unique([userId, bodyPart])
 }

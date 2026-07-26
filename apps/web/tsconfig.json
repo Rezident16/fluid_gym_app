@@ -11,6 +11,5 @@
     "resolveJsonModule": true,
     "types": ["vite/client"]
   },
-  "include": ["src/**/*"],
-  "references": [{ "path": "../../packages/shared-types" }]
+  "include": ["src/**/*"]
 }

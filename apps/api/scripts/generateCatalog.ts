@@ -10,7 +10,7 @@
  */
 import Anthropic from '@anthropic-ai/sdk'
 import prisma from '../src/db/prisma'
-import type { BodyPart, Equipment } from '../src/models/types'
+import type { BodyPart, Equipment } from '@fluidgym/shared-types'
 
 const BODY_PARTS: BodyPart[] = ['chest', 'back', 'legs', 'shoulders', 'arms', 'core', 'full_body']
 const EQUIPMENT: Equipment[] = ['barbell', 'dumbbell', 'machine', 'bodyweight', 'cable']
@@ -102,10 +102,15 @@ async function resolveYoutubeVideo(youtubeApiKey: string, exerciseName: string):
 async function findOrCreateExercise(
   youtubeApiKey: string,
   proposed: ProposedExercise,
-): Promise<{ id: string; needsReview: boolean; qcLine: string }> {
+): Promise<{ id: string; existingAlternatives: string[]; needsReview: boolean; qcLine: string }> {
   const existing = await prisma.exercise.findFirst({ where: { name: proposed.name } })
   if (existing) {
-    return { id: existing.id, needsReview: false, qcLine: `${proposed.name} → already in catalog, skipped` }
+    return {
+      id: existing.id,
+      existingAlternatives: existing.alternatives,
+      needsReview: false,
+      qcLine: `${proposed.name} → already in catalog, skipped`,
+    }
   }
 
   const match = await resolveYoutubeVideo(youtubeApiKey, proposed.name)
@@ -130,7 +135,7 @@ async function findOrCreateExercise(
     ? `${proposed.name} → NEEDS REVIEW (no usable YouTube match)`
     : `${proposed.name} → "${match!.title}" (${match!.channel})`
 
-  return { id: created.id, needsReview, qcLine }
+  return { id: created.id, existingAlternatives: [], needsReview, qcLine }
 }
 
 async function main() {
@@ -182,18 +187,19 @@ async function main() {
     }
 
     if (alternativeIds.length > 0) {
-      await prisma.exercise.update({ where: { id: primary.id }, data: { alternatives: alternativeIds } })
+      const mergedAlternatives = Array.from(new Set([...primary.existingAlternatives, ...alternativeIds]))
+      await prisma.exercise.update({ where: { id: primary.id }, data: { alternatives: mergedAlternatives } })
     }
   }
 
   console.log('\n--- QC diff ---')
   console.log(qcLines.join('\n'))
   console.log(`\nDone. ${proposed.length} primary exercises processed, ${needsReviewCount} flagged needsReview.`)
-
-  await prisma.$disconnect()
 }
 
-main().catch((err) => {
-  console.error(err)
-  process.exit(1)
-})
+main()
+  .catch((err) => {
+    console.error(err)
+    process.exitCode = 1
+  })
+  .finally(() => prisma.$disconnect())
