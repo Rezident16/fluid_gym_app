@@ -29,6 +29,15 @@ npm run dev:web
 
 The web app runs at `http://localhost:5173` and proxies `/api` to the backend.
 
+## Lint
+
+```bash
+npm run lint       # check apps/api, apps/web, packages/shared-types
+npm run lint:fix
+```
+
+Single flat config (`eslint.config.mjs`) at the repo root covers all workspaces — TS recommended rules everywhere, plus `react-hooks`/`react-refresh` rules scoped to `apps/web`.
+
 ## Build for production
 
 ```bash
