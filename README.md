@@ -193,17 +193,19 @@ Each numbered item is sized to fit one sitting. Check items off in order; don't 
 - [x] `apps/web`: Vite + React + TS boilerplate, confirm it hits the API health-check.
 
 ### Phase 1 — Data Layer (≈4 sessions)
-- [ ] Install Prisma, connect to a local/hosted Postgres (Supabase/Neon free tier is fine for solo dev).
-- [ ] Write `schema.prisma` for `User`, `Goal`, `Exercise`, `TrainingPreference`, `WeeklyIntention`, `SetLog`, `Session`, `BodyPartHistory` from §3.
-- [ ] `prisma migrate dev` — get it applying cleanly.
-- [ ] Get a **YouTube Data API key** (Google Cloud Console, free tier is plenty for search calls at this volume).
-- [ ] Write `scripts/generateCatalog.ts` Stage 1: prompt AI for a batch of ~10 exercises (name/bodyPart/equipment/alternative names) as structured JSON. Test on one body part first.
-- [ ] Write Stage 2: for each proposed exercise, call `youtube.search.list`, store the real `videoId`/title/channel; flag no-match entries as `needsReview`.
-- [ ] Run the pipeline across all body parts (a few small batches across a few sessions is fine — it's a script you re-run, not manual data entry), then do the quick eyeball QC pass on the printed diff.
+- [x] Install Prisma — `@prisma/client`/`prisma` deps in place, client generates cleanly (`npm run db:generate`).
+- [ ] Connect to a local/hosted Postgres (Supabase/Neon free tier is fine for solo dev) — add a real `DATABASE_URL` to `.env` (placeholder in place, see `.env.example`).
+- [x] Write `schema.prisma` for `User`, `Goal`, `Exercise`, `TrainingPreference`, `WeeklyIntention`, `SetLog`, `Session`, `BodyPartHistory` from §3 (includes `Exercise.needsReview` for Stage 2 below).
+- [x] `prisma migrate dev` — verified applying cleanly against a real local Postgres; the `20260727151002_init` migration is committed. Your own `DATABASE_URL` will need `npm run db:migrate` re-run once (or `prisma migrate deploy` against a fresh DB) to apply it there.
+- [ ] Get a **YouTube Data API key** (Google Cloud Console, free tier is plenty for search calls at this volume) — placeholder in `.env`.
+- [x] Write `scripts/generateCatalog.ts` Stage 1: prompt AI for a batch of ~10 exercises (name/bodyPart/equipment/alternative names) as structured JSON (forced tool call). Takes `bodyPart` + `count` args, so you can test on one body part first.
+- [x] Write Stage 2: for each proposed exercise, call `youtube.search.list`, store the real `videoId`/title/channel; flag no-match entries as `needsReview`.
+- [ ] Run the pipeline across all body parts (`npm run generate:catalog -- <bodyPart> [count]`) once `ANTHROPIC_API_KEY`/`YOUTUBE_API_KEY` are real — it currently exits with a clear error on placeholder keys. Then do the quick eyeball QC pass on the printed diff.
 
 ### Phase 2 — Auth (≈2 sessions)
-- [ ] Signup/login routes, bcrypt + JWT, auth middleware.
-- [ ] Wire a bare login form in React, confirm token round-trips.
+- [x] Signup/login routes, bcryptjs + JWT, auth middleware (`requireAuth`) — `POST /api/auth/signup`, `POST /api/auth/login`, `GET /api/me`.
+- [x] Wire a bare login/signup form in React, confirm token round-trips — verified live: signed up through the actual browser UI against a real local Postgres, JWT stored client-side, `/api/me` round-trip confirmed with a screenshot of the "Logged in as ..." state.
+- [x] **Google OAuth** (added beyond the original plan, per request): `POST /api/auth/google` verifies a Google Identity Services ID token server-side (`google-auth-library`, no client secret needed) and issues our own JWT — links to an existing account by email if one exists, otherwise creates a new one. Frontend `GoogleSignInButton` renders the real GIS button once `VITE_GOOGLE_CLIENT_ID` is set; until then it shows a disabled placeholder (verified in the browser). Needs a real `GOOGLE_CLIENT_ID`/`VITE_GOOGLE_CLIENT_ID` (Google Cloud Console → Credentials → OAuth client ID → Web application) to actually test sign-in — placeholders are in `.env`.
 
 ### Phase 3 — Goal & Preferences CRUD (≈2 sessions)
 - [ ] `POST/GET /api/goal`.

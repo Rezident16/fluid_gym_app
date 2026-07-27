@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String?
+  googleId     String?  @unique
+  createdAt    DateTime @default(now())
+
+  goal          Goal?
+  preferences   TrainingPreference?
+  sessions      Session[]
+  weeklyIntentions WeeklyIntention[]
+  bodyPartHistories BodyPartHistory[]
+}
+
+model Goal {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @unique
+  type      String
+  notes     String?
+  updatedAt DateTime @updatedAt
+}
+
+model TrainingPreference {
+  id          String @id @default(uuid())
+  user        User   @relation(fields: [userId], references: [id])
+  userId      String @unique
+  splitFlavor String
+}
+
+model Exercise {
+  id                  String   @id @default(uuid())
+  name                String   @unique
+  bodyPart            String
+  secondaryBodyParts  String[]
+  equipment           String
+  youtubeVideoId      String?
+  youtubeTitle        String?
+  youtubeChannel      String?
+  source              String
+  alternatives        String[]
+  needsReview         Boolean  @default(false)
+}
+
+model WeeklyIntention {
+  id            String   @id @default(uuid())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        String
+  weekStartDate DateTime
+  targetSessions Int
+
+  @@unique([userId, weekStartDate])
+}
+
+model Session {
+  id               String   @id @default(uuid())
+  user             User     @relation(fields: [userId], references: [id])
+  userId           String
+  date             DateTime
+  timeBudgetMinutes Int?
+  plannedBodyParts String[]
+  status           String
+  setLogs          SetLog[]
+}
+
+model SetLog {
+  id         String   @id @default(uuid())
+  session    Session  @relation(fields: [sessionId], references: [id])
+  sessionId  String
+  exerciseId String
+  setNumber  Int
+  reps       Int
+  weight     Float
+  unit       String
+  completedAt DateTime @default(now())
+}
+
+model BodyPartHistory {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  bodyPart      String
+  lastTrainedDate DateTime
+  lastSessionId String
+
+  @@unique([userId, bodyPart])
+}
